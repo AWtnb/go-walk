@@ -37,7 +37,7 @@ func (wex WalkException) isSkippablePath(path string) bool {
 		return true
 	}
 	for _, n := range wex.names {
-		if strings.Contains(path, sep+n+sep) || strings.HasSuffix(path, n) {
+		if strings.HasPrefix(path, n) || strings.Contains(path, sep+n+sep) || strings.HasSuffix(path, n) {
 			return true
 		}
 	}

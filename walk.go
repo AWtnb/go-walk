@@ -51,6 +51,10 @@ func (d Dir) GetChildItem() (found []string, err error) {
 		if err != nil {
 			return err
 		}
+		if path == d.Root {
+			found = append(found, path)
+			return nil
+		}
 		if d.member.IsSkippableDepth(path) {
 			return filepath.SkipDir
 		}
