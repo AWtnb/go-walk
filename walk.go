@@ -38,7 +38,7 @@ func (d Dir) GetChildItemWithEverything() (found []string, err error) {
 		return
 	}
 	if 0 < len(found) {
-		found = d.member.FilterByDepth(d.exeception.Filter(found))
+		found = d.member.FilterByDepth(d.exeception.Filter(found, d.Root))
 	}
 	return
 }
