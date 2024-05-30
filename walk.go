@@ -10,19 +10,21 @@ import (
 )
 
 type Dir struct {
-	All        bool
-	Root       string
+	all        bool
+	root       string
 	member     dir.DirMember
 	exeception dir.WalkException
 }
 
-func (d *Dir) SetWalkDepth(depth int) {
-	dm := dir.DirMember{MaxDepth: depth}
-	dm.SetRoot(d.Root)
-	d.member = dm
-}
+// `exclude` is comma-separated string
+func (d *Dir) Init(root string, all bool, depth int, exclude string) {
+	d.root = root
+	d.all = all
 
-func (d *Dir) SetWalkException(exclude string) {
+	dm := dir.DirMember{MaxDepth: depth}
+	dm.SetRoot(d.root)
+	d.member = dm
+
 	var wex dir.WalkException
 	wex.SetNames(exclude, ",")
 	wex.SetName("AppData")
@@ -33,12 +35,12 @@ func (d Dir) GetChildItemWithEverything() (found []string, err error) {
 	if d.member.MaxDepth == 0 {
 		return
 	}
-	found, err = everything.Scan(d.Root, !d.All)
+	found, err = everything.Scan(d.root, !d.all)
 	if err != nil {
 		return
 	}
 	if 0 < len(found) {
-		found = d.member.FilterByDepth(d.exeception.Filter(found, d.Root))
+		found = d.member.FilterByDepth(d.exeception.Filter(found, d.root))
 	}
 	return
 }
@@ -47,11 +49,11 @@ func (d Dir) GetChildItem() (found []string, err error) {
 	if d.member.MaxDepth == 0 {
 		return
 	}
-	err = filepath.WalkDir(d.Root, func(path string, info fs.DirEntry, err error) error {
+	err = filepath.WalkDir(d.root, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if path == d.Root {
+		if path == d.root {
 			found = append(found, path)
 			return nil
 		}
@@ -67,7 +69,7 @@ func (d Dir) GetChildItem() (found []string, err error) {
 			}
 			found = append(found, path)
 		} else {
-			if d.All {
+			if d.all {
 				found = append(found, path)
 			}
 		}
