@@ -2,8 +2,35 @@ package dir
 
 import (
 	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 )
+
+const SEP = string(os.PathSeparator)
+
+func getCommonRoot(paths []string) string {
+	if len(paths) < 2 {
+		return paths[0]
+	}
+	slices.SortFunc(paths, func(a, b string) int {
+		la := len(strings.Split(a, SEP))
+		lb := len(strings.Split(b, SEP))
+		if la < lb {
+			return -1
+		}
+		if lb < la {
+			return 1
+		}
+		return 0
+	})
+	shortest := paths[0]
+	second := paths[1]
+	if strings.HasPrefix(second, shortest+SEP) {
+		return shortest
+	}
+	return filepath.Dir(shortest)
+}
 
 type WalkException struct {
 	names []string
@@ -31,28 +58,28 @@ func (wex WalkException) Contains(name string) bool {
 	return false
 }
 
-func (wex WalkException) isSkippablePath(path string) bool {
-	sep := string(os.PathSeparator)
-	if strings.HasPrefix(path, ".") || strings.Contains(path, sep+".") {
+func (wex WalkException) isSkippable(path string, root string) bool {
+	rel := strings.TrimPrefix(strings.TrimPrefix(path, root), SEP)
+	if strings.HasPrefix(rel, ".") || strings.Contains(rel, SEP+".") {
 		return true
 	}
 	for _, n := range wex.names {
-		if strings.HasPrefix(path, n) || strings.Contains(path, sep+n+sep) || strings.HasSuffix(path, n) {
+		if strings.HasPrefix(rel, n) || strings.Contains(rel, SEP+n+SEP) || strings.HasSuffix(rel, n) {
 			return true
 		}
 	}
 	return false
 }
 
-func (wex WalkException) Filter(paths []string, root string) (filtered []string) {
+func (wex WalkException) Filter(paths []string) (filtered []string) {
 	if len(wex.names) < 1 {
 		filtered = paths
 		return
 	}
+	root := getCommonRoot(paths)
 	for i := 0; i < len(paths); i++ {
 		p := paths[i]
-		rel := strings.TrimPrefix(strings.TrimPrefix(p, root), string(os.PathSeparator))
-		if wex.isSkippablePath(rel) {
+		if wex.isSkippable(p, root) {
 			continue
 		}
 		filtered = append(filtered, p)
