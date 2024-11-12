@@ -87,6 +87,25 @@ func TestGetChildItem(t *testing.T) {
 	}
 }
 
+func TestGetChildItemWithDepth(t *testing.T) {
+	tdp := testDirPath("hoge")
+	if err := testTree(tdp); err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("testing to traverse under: %s (depth: 2)", tdp)
+	var d walk.Dir
+	d.Init(tdp, true, 2, EXCEPTION)
+	found, err := d.GetChildItem()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	for _, s := range found {
+		t.Logf("'%s' was found", s)
+	}
+}
+
 func TestGetChildItemOnlyDir(t *testing.T) {
 	tdp := testDirPath("hoge")
 	if err := testTree(tdp); err != nil {
