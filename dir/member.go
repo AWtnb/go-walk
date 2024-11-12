@@ -1,13 +1,11 @@
 package dir
 
 import (
-	"os"
 	"strings"
 )
 
 func getDepth(path string) int {
-	s := string(os.PathSeparator)
-	return strings.Count(strings.TrimSuffix(path, s), s)
+	return strings.Count(strings.TrimSuffix(path, SEP), SEP)
 }
 
 type DirMember struct {
