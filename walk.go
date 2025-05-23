@@ -21,8 +21,8 @@ func (d *Dir) Init(root string, all bool, depth int, exclude string) {
 	d.root = root
 	d.all = all
 
-	dm := dir.DirMember{MaxDepth: depth}
-	dm.SetRoot(d.root)
+	var dm dir.DirMember
+	dm.Init(d.root, depth)
 	d.member = dm
 
 	var wex dir.WalkException
@@ -32,7 +32,7 @@ func (d *Dir) Init(root string, all bool, depth int, exclude string) {
 }
 
 func (d Dir) GetChildItemWithEverything() (found []string, err error) {
-	if d.member.MaxDepth == 0 {
+	if d.member.MaxDepth() == 0 {
 		return
 	}
 	found, err = everything.Scan(d.root, !d.all)
@@ -46,7 +46,7 @@ func (d Dir) GetChildItemWithEverything() (found []string, err error) {
 }
 
 func (d Dir) GetChildItem() (found []string, err error) {
-	if d.member.MaxDepth == 0 {
+	if d.member.MaxDepth() == 0 {
 		return
 	}
 	err = filepath.WalkDir(d.root, func(path string, info fs.DirEntry, err error) error {

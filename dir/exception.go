@@ -50,12 +50,7 @@ func (wex *WalkException) SetNames(s string, sep string) {
 }
 
 func (wex WalkException) Contains(name string) bool {
-	for _, n := range wex.names {
-		if n == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(wex.names, name)
 }
 
 func (wex WalkException) isSkippable(path string, root string) bool {

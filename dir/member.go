@@ -10,19 +10,24 @@ func getDepth(path string) int {
 
 type DirMember struct {
 	rootDepth int
-	MaxDepth  int
+	maxDepth  int
 }
 
-func (dm *DirMember) SetRoot(path string) {
+func (dm *DirMember) Init(path string, depth int) {
 	dm.rootDepth = getDepth(path)
+	dm.maxDepth = depth
+}
+
+func (dm DirMember) MaxDepth() int {
+	return dm.maxDepth
 }
 
 func (dm DirMember) IsSkippableDepth(path string) bool {
-	return 0 < dm.MaxDepth && dm.MaxDepth < getDepth(path)-dm.rootDepth
+	return 0 < dm.maxDepth && dm.maxDepth < getDepth(path)-dm.rootDepth
 }
 
 func (dm DirMember) FilterByDepth(paths []string) (filteredPaths []string) {
-	if dm.MaxDepth < 0 {
+	if dm.maxDepth < 0 {
 		filteredPaths = paths
 		return
 	}
