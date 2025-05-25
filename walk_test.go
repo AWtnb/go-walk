@@ -75,9 +75,9 @@ func TestGetChildItem(t *testing.T) {
 		return
 	}
 	t.Logf("testing to traverse under: %s", tdp)
-	var d walk.Dir
+	var d walk.Walker
 	d.Init(tdp, true, -1, EXCEPTION)
-	found, err := d.GetChildItem()
+	found, err := d.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
@@ -94,9 +94,9 @@ func TestGetChildItemWithDepth(t *testing.T) {
 		return
 	}
 	t.Logf("testing to traverse under: %s (depth: 2)", tdp)
-	var d walk.Dir
+	var d walk.Walker
 	d.Init(tdp, true, 2, EXCEPTION)
-	found, err := d.GetChildItem()
+	found, err := d.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
@@ -113,9 +113,9 @@ func TestGetChildItemOnlyDir(t *testing.T) {
 		return
 	}
 	t.Logf("testing to traverse dirs under: %s", tdp)
-	var d walk.Dir
+	var d walk.Walker
 	d.Init(tdp, false, -1, EXCEPTION)
-	found, err := d.GetChildItem()
+	found, err := d.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
@@ -132,9 +132,9 @@ func TestGetChildItemWithoutException(t *testing.T) {
 		return
 	}
 	t.Logf("testing to traverse under without exception: %s", tdp)
-	var d walk.Dir
+	var d walk.Walker
 	d.Init(tdp, true, -1, "")
-	found, err := d.GetChildItem()
+	found, err := d.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
@@ -152,9 +152,9 @@ func TestGetChildItemInException(t *testing.T) {
 	}
 	r := filepath.Join(tdp, EXCEPTION)
 	t.Logf("testing to traverse under exception directory itself: %s", r)
-	var d walk.Dir
+	var d walk.Walker
 	d.Init(r, true, -1, EXCEPTION)
-	found, err := d.GetChildItem()
+	found, err := d.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
@@ -171,9 +171,9 @@ func TestGetChildItemWithEverything(t *testing.T) {
 		return
 	}
 	t.Logf("testing to traverse under with Everything: %s", tdp)
-	var d walk.Dir
+	var d walk.Walker
 	d.Init(tdp, true, -1, EXCEPTION)
-	found, err := d.GetChildItemWithEverything()
+	found, err := d.TraverseEverything()
 	if err != nil {
 		t.Error(err)
 		return
@@ -190,9 +190,9 @@ func TestGetChildItemWithEverythingOnlyDir(t *testing.T) {
 		return
 	}
 	t.Logf("testing to traverse dirs under with Everything: %s", tdp)
-	var d walk.Dir
+	var d walk.Walker
 	d.Init(tdp, false, -1, EXCEPTION)
-	found, err := d.GetChildItemWithEverything()
+	found, err := d.TraverseEverything()
 	if err != nil {
 		t.Error(err)
 		return
@@ -209,9 +209,9 @@ func TestGetChildItemWithEverythingWithoutException(t *testing.T) {
 		return
 	}
 	t.Logf("testing to traverse under with Everything without exception: %s", tdp)
-	var d walk.Dir
+	var d walk.Walker
 	d.Init(tdp, true, -1, "")
-	found, err := d.GetChildItemWithEverything()
+	found, err := d.TraverseEverything()
 	if err != nil {
 		t.Error(err)
 		return
@@ -229,9 +229,9 @@ func TestGetChildItemWithEverythingInException(t *testing.T) {
 	}
 	r := filepath.Join(tdp, EXCEPTION)
 	t.Logf("testing to traverse under exception directory itself with Everything: %s", r)
-	var d walk.Dir
+	var d walk.Walker
 	d.Init(r, true, -1, EXCEPTION)
-	found, err := d.GetChildItemWithEverything()
+	found, err := d.TraverseEverything()
 	if err != nil {
 		t.Error(err)
 		return
@@ -248,14 +248,14 @@ func TestSamePathsFound(t *testing.T) {
 		return
 	}
 	t.Logf("testing to traverse under: %s", tdp)
-	var d walk.Dir
+	var d walk.Walker
 	d.Init(tdp, true, -1, EXCEPTION)
-	found1, err := d.GetChildItem()
+	found1, err := d.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	found2, err := d.GetChildItemWithEverything()
+	found2, err := d.TraverseEverything()
 	if err != nil {
 		t.Error(err)
 		return

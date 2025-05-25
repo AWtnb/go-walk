@@ -2,76 +2,119 @@ package walk
 
 import (
 	"io/fs"
+	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/AWtnb/go-everything"
-	"github.com/AWtnb/go-walk/dir"
 )
 
-type Dir struct {
-	all        bool
-	root       string
-	member     dir.DirMember
-	exeception dir.WalkException
+const SEP = string(os.PathSeparator)
+
+func getDepth(path string) int {
+	return strings.Count(strings.TrimSuffix(path, SEP), SEP)
+}
+
+func isSubPath(base, target string) bool {
+	base = filepath.Clean(base)
+	target = filepath.Clean(target)
+
+	rel, err := filepath.Rel(base, target)
+	if err != nil {
+		return false
+	}
+	return rel != "." && !strings.HasPrefix(rel, "..")
+}
+
+type Walker struct {
+	all       bool
+	root      string
+	step      int
+	exception []string
 }
 
 // `exclude` is comma-separated string
-func (d *Dir) Init(root string, all bool, depth int, exclude string) {
-	d.root = root
-	d.all = all
+func (w *Walker) Init(root string, all bool, depth int, exclude string) {
+	w.root = root
+	w.all = all
+	w.step = depth
 
-	var dm dir.DirMember
-	dm.Init(d.root, depth)
-	d.member = dm
-
-	var wex dir.WalkException
-	wex.SetNames(exclude, ",")
-	wex.SetName("AppData")
-	d.exeception = wex
+	for _, e := range strings.Split(exclude, ",") {
+		w.exception = append(w.exception, strings.TrimSpace(e))
+	}
+	a := "AppData"
+	if !slices.Contains(w.exception, a) {
+		w.exception = append(w.exception, a)
+	}
 }
 
-func (d Dir) GetChildItemWithEverything() (found []string, err error) {
-	if d.member.MaxDepth() == 0 {
-		return
-	}
-	found, err = everything.Scan(d.root, !d.all)
+func (w Walker) TraverseEverything() (found []string, err error) {
+	result, err := everything.Scan(w.root, !w.all)
 	if err != nil {
 		return
 	}
-	if 0 < len(found) {
-		found = d.member.FilterByDepth(d.exeception.Filter(found))
+
+	slices.Sort(result)
+
+	rd := getDepth(w.root)
+	shouldSkips := make(map[string]struct{})
+	for _, path := range result {
+
+		skippable := false
+		for sd := range shouldSkips {
+			if isSubPath(sd, path) {
+				skippable = true
+			}
+		}
+		if skippable {
+			continue
+		}
+
+		d := getDepth(path) - rd
+		if d == 0 { // `path` is root itself
+			found = append(found, path)
+			continue
+		}
+		if -1 < w.step && w.step < d {
+			d := filepath.Dir(path)
+			shouldSkips[d] = struct{}{}
+			continue
+		}
+
+		name := filepath.Base(path)
+		if slices.Contains(w.exception, name) || strings.HasPrefix(name, ".") {
+			shouldSkips[path] = struct{}{}
+			continue
+		}
+		found = append(found, path)
 	}
 	return
 }
 
-func (d Dir) GetChildItem() (found []string, err error) {
-	if d.member.MaxDepth() == 0 {
-		return
-	}
-	err = filepath.WalkDir(d.root, func(path string, info fs.DirEntry, err error) error {
+func (w Walker) Traverse() (found []string, err error) {
+	rd := getDepth(w.root)
+	err = filepath.WalkDir(w.root, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if path == d.root {
+		d := getDepth(path) - rd
+		if d == 0 { // `path` is root itself
 			found = append(found, path)
 			return nil
 		}
-		if d.member.IsSkippableDepth(path) {
-			return filepath.SkipDir
+		if -1 < w.step && w.step < d {
+			return filepath.SkipAll
 		}
-		if d.exeception.Contains(info.Name()) {
-			return filepath.SkipDir
-		}
-		if info.IsDir() {
-			if strings.HasPrefix(info.Name(), ".") {
+		name := info.Name()
+		if slices.Contains(w.exception, name) || strings.HasPrefix(name, ".") {
+			if info.IsDir() {
 				return filepath.SkipDir
 			}
+			return nil
+		}
+		if info.IsDir() || w.all {
 			found = append(found, path)
-		} else {
-			if d.all {
-				found = append(found, path)
-			}
 		}
 		return nil
 	})
