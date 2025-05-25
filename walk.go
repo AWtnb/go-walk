@@ -49,22 +49,24 @@ func (w *Walker) Init(root string, all bool, depth int, exclude string) {
 	}
 }
 
-func (w Walker) TraverseEverything() (found []string, err error) {
+func (w Walker) EverythingTraverse() (found []string, err error) {
 	result, err := everything.Scan(w.root, !w.all)
 	if err != nil {
 		return
 	}
-
 	slices.Sort(result)
 
+	// empty struct{} is 0 bytes in size, making it highly efficient
+	skipPaths := make(map[string]struct{})
 	rd := getDepth(w.root)
-	shouldSkips := make(map[string]struct{})
+
 	for _, path := range result {
 
 		skippable := false
-		for sd := range shouldSkips {
+		for sd := range skipPaths {
 			if isSubPath(sd, path) {
 				skippable = true
+				break
 			}
 		}
 		if skippable {
@@ -78,13 +80,13 @@ func (w Walker) TraverseEverything() (found []string, err error) {
 		}
 		if -1 < w.step && w.step < d {
 			d := filepath.Dir(path)
-			shouldSkips[d] = struct{}{}
+			skipPaths[d] = struct{}{}
 			continue
 		}
 
 		name := filepath.Base(path)
 		if slices.Contains(w.exception, name) || strings.HasPrefix(name, ".") {
-			shouldSkips[path] = struct{}{}
+			skipPaths[path] = struct{}{}
 			continue
 		}
 		found = append(found, path)
@@ -104,7 +106,7 @@ func (w Walker) Traverse() (found []string, err error) {
 			return nil
 		}
 		if -1 < w.step && w.step < d {
-			return filepath.SkipAll
+			return filepath.SkipDir
 		}
 		name := info.Name()
 		if slices.Contains(w.exception, name) || strings.HasPrefix(name, ".") {
