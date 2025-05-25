@@ -58,8 +58,8 @@ func makeTestTree(root string, dirs []string, files []string) error {
 }
 
 func testTree(root string) error {
-	ds := []string{EXCEPTION + "/uu", EXCEPTION + "/pp", "aa/bb", "aa/cc", "bb/ee"}
-	fs := []string{EXCEPTION + "/pp/mm.txt", "aa/bb/cc.txt", "aa/ff.txt", "dd.txt"}
+	ds := []string{EXCEPTION + "/uu", EXCEPTION + "/pp", "aa/bb", "aa/.zz/uu", "aa/cc", "bb/ee"}
+	fs := []string{EXCEPTION + "/pp/mm.txt", "aa/.zz/i.txt", "aa/.xx", "bb/_obsolete", "aa/bb/cc.txt", "aa/ff.txt", "dd.txt"}
 	return makeTestTree(root, ds, fs)
 }
 
@@ -68,83 +68,90 @@ func testDirPath(name string) string {
 	return filepath.Join(up, "Personal", "gotemp", name)
 }
 
-func TestGetChildItem(t *testing.T) {
+func TestTraverse(t *testing.T) {
 	tdp := testDirPath("hoge")
 	if err := testTree(tdp); err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("testing to traverse under: %s", tdp)
-	var d walk.Walker
-	d.Init(tdp, true, -1, EXCEPTION)
-	found, err := d.Traverse()
+	var w walk.Walker
+	w.Init(tdp, true, -1, EXCEPTION)
+	found, err := w.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	for _, s := range found {
-		t.Logf("'%s' was found", s)
+		r, _ := filepath.Rel(tdp, s)
+		t.Logf("'%s' was found", r)
 	}
 }
 
-func TestGetChildItemWithDepth(t *testing.T) {
+func TestTraverseWithDepth(t *testing.T) {
 	tdp := testDirPath("hoge")
 	if err := testTree(tdp); err != nil {
 		t.Error(err)
 		return
 	}
-	t.Logf("testing to traverse under: %s (depth: 2)", tdp)
-	var d walk.Walker
-	d.Init(tdp, true, 2, EXCEPTION)
-	found, err := d.Traverse()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	for _, s := range found {
-		t.Logf("'%s' was found", s)
+	depths := []int{0, 1, 2}
+	for _, dep := range depths {
+		t.Logf("---------------------\ntesting to traverse under: %s (depth: %d)", tdp, dep)
+		var w walk.Walker
+		w.Init(tdp, true, dep, EXCEPTION)
+		found, err := w.Traverse()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		for _, s := range found {
+			r, _ := filepath.Rel(tdp, s)
+			t.Logf("'%s' was found", r)
+		}
 	}
 }
 
-func TestGetChildItemOnlyDir(t *testing.T) {
+func TestTraverseOnlyDir(t *testing.T) {
 	tdp := testDirPath("hoge")
 	if err := testTree(tdp); err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("testing to traverse dirs under: %s", tdp)
-	var d walk.Walker
-	d.Init(tdp, false, -1, EXCEPTION)
-	found, err := d.Traverse()
+	var w walk.Walker
+	w.Init(tdp, false, -1, EXCEPTION)
+	found, err := w.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	for _, s := range found {
-		t.Logf("'%s' was found", s)
+		r, _ := filepath.Rel(tdp, s)
+		t.Logf("'%s' was found", r)
 	}
 }
 
-func TestGetChildItemWithoutException(t *testing.T) {
+func TestTraverseWithoutException(t *testing.T) {
 	tdp := testDirPath("hoge")
 	if err := testTree(tdp); err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("testing to traverse under without exception: %s", tdp)
-	var d walk.Walker
-	d.Init(tdp, true, -1, "")
-	found, err := d.Traverse()
+	var w walk.Walker
+	w.Init(tdp, true, -1, "")
+	found, err := w.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	for _, s := range found {
-		t.Logf("'%s' was found", s)
+		r, _ := filepath.Rel(tdp, s)
+		t.Logf("'%s' was found", r)
 	}
 }
 
-func TestGetChildItemInException(t *testing.T) {
+func TestTraverseInException(t *testing.T) {
 	tdp := testDirPath("hoge")
 	if err := testTree(tdp); err != nil {
 		t.Error(err)
@@ -152,76 +159,103 @@ func TestGetChildItemInException(t *testing.T) {
 	}
 	r := filepath.Join(tdp, EXCEPTION)
 	t.Logf("testing to traverse under exception directory itself: %s", r)
-	var d walk.Walker
-	d.Init(r, true, -1, EXCEPTION)
-	found, err := d.Traverse()
+	var w walk.Walker
+	w.Init(r, true, -1, EXCEPTION)
+	found, err := w.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	for _, s := range found {
-		t.Logf("'%s' was found", s)
+		r, _ := filepath.Rel(tdp, s)
+		t.Logf("'%s' was found", r)
 	}
 }
 
-func TestGetChildItemWithEverything(t *testing.T) {
+func TestEverythingTraverse(t *testing.T) {
 	tdp := testDirPath("hoge")
 	if err := testTree(tdp); err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("testing to traverse under with Everything: %s", tdp)
-	var d walk.Walker
-	d.Init(tdp, true, -1, EXCEPTION)
-	found, err := d.TraverseEverything()
+	var w walk.Walker
+	w.Init(tdp, true, -1, EXCEPTION)
+	found, err := w.EverythingTraverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	for _, s := range found {
-		t.Logf("'%s' was found", s)
+		r, _ := filepath.Rel(tdp, s)
+		t.Logf("'%s' was found", r)
 	}
 }
 
-func TestGetChildItemWithEverythingOnlyDir(t *testing.T) {
+func TestEverythingTraverseWithDepth(t *testing.T) {
+	tdp := testDirPath("hoge")
+	if err := testTree(tdp); err != nil {
+		t.Error(err)
+		return
+	}
+	depths := []int{0, 1, 2}
+	for _, dep := range depths {
+		t.Logf("---------------------\ntesting to traverse under: %s (depth: %d)", tdp, dep)
+		var w walk.Walker
+		w.Init(tdp, true, dep, EXCEPTION)
+		found, err := w.EverythingTraverse()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		for _, s := range found {
+			r, _ := filepath.Rel(tdp, s)
+			t.Logf("'%s' was found", r)
+		}
+	}
+}
+
+func TestEverythingTraverseOnlyDir(t *testing.T) {
 	tdp := testDirPath("hoge")
 	if err := testTree(tdp); err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("testing to traverse dirs under with Everything: %s", tdp)
-	var d walk.Walker
-	d.Init(tdp, false, -1, EXCEPTION)
-	found, err := d.TraverseEverything()
+	var w walk.Walker
+	w.Init(tdp, false, -1, EXCEPTION)
+	found, err := w.EverythingTraverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	for _, s := range found {
-		t.Logf("'%s' was found", s)
+		r, _ := filepath.Rel(tdp, s)
+		t.Logf("'%s' was found", r)
 	}
 }
 
-func TestGetChildItemWithEverythingWithoutException(t *testing.T) {
+func TestEverythingTraverseWithoutException(t *testing.T) {
 	tdp := testDirPath("hoge")
 	if err := testTree(tdp); err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("testing to traverse under with Everything without exception: %s", tdp)
-	var d walk.Walker
-	d.Init(tdp, true, -1, "")
-	found, err := d.TraverseEverything()
+	var w walk.Walker
+	w.Init(tdp, true, -1, "")
+	found, err := w.EverythingTraverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	for _, s := range found {
-		t.Logf("'%s' was found", s)
+		r, _ := filepath.Rel(tdp, s)
+		t.Logf("'%s' was found", r)
 	}
 }
 
-func TestGetChildItemWithEverythingInException(t *testing.T) {
+func TestEverythingTraverseInException(t *testing.T) {
 	tdp := testDirPath("hoge")
 	if err := testTree(tdp); err != nil {
 		t.Error(err)
@@ -229,15 +263,16 @@ func TestGetChildItemWithEverythingInException(t *testing.T) {
 	}
 	r := filepath.Join(tdp, EXCEPTION)
 	t.Logf("testing to traverse under exception directory itself with Everything: %s", r)
-	var d walk.Walker
-	d.Init(r, true, -1, EXCEPTION)
-	found, err := d.TraverseEverything()
+	var w walk.Walker
+	w.Init(r, true, -1, EXCEPTION)
+	found, err := w.EverythingTraverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	for _, s := range found {
-		t.Logf("'%s' was found", s)
+		r, _ := filepath.Rel(tdp, s)
+		t.Logf("'%s' was found", r)
 	}
 }
 
@@ -248,46 +283,51 @@ func TestSamePathsFound(t *testing.T) {
 		return
 	}
 	t.Logf("testing to traverse under: %s", tdp)
-	var d walk.Walker
-	d.Init(tdp, true, -1, EXCEPTION)
-	found1, err := d.Traverse()
+	var w walk.Walker
+	w.Init(tdp, true, -1, EXCEPTION)
+	found1, err := w.Traverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	found2, err := d.TraverseEverything()
+	found2, err := w.EverythingTraverse()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Log("checking if GetChildItem() and GetChildItemWithEverything() returns same slice")
-	t.Log("result of GetChildItem()")
+	t.Log("checking if Traverse() and EverythingTraverse() returns same slice")
+	t.Log("result of Traverse()")
 	for _, s := range found1 {
 		t.Log(s)
 	}
-	t.Log("result of GetChildItemWithEverything()")
+	t.Log("result of EverythingTraverse()")
 	for _, s := range found2 {
 		t.Log(s)
 	}
 	for _, s := range found1 {
 		if !slices.Contains(found2, s) {
-			t.Errorf("%s not found in GetChildItemWithEverything() result", s)
+			t.Errorf("%s not found in EverythingTraverse() result", s)
 			return
 		}
 	}
 	for _, s := range found2 {
 		if !slices.Contains(found1, s) {
-			t.Errorf("%s not found in GetChildItem() result", s)
+			t.Errorf("%s not found in Traverse() result", s)
 			return
 		}
 	}
 	t.Log("2 slices are the same")
 	t.Log("checking 2 slices are the same order")
+	isDifferentOrder := false
 	for i, s := range found1 {
 		if s != found2[i] {
+			isDifferentOrder = true
 			t.Logf("index %d item is different", i)
-			t.Logf("index %d of GetChildItem() is %s", i, s)
-			t.Logf("index %d of GetChildItemWithEverything() is %s", i, found2[i])
+			t.Logf("index %d of Traverse() is %s", i, s)
+			t.Logf("index %d of EverythingTraverse() is %s", i, found2[i])
 		}
+	}
+	if !isDifferentOrder {
+		t.Log("2 slices are the same order")
 	}
 }
