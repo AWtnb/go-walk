@@ -10,10 +10,9 @@ import (
 	"github.com/AWtnb/go-everything"
 )
 
-const SEP = string(os.PathSeparator)
-
 func getDepth(path string) int {
-	return strings.Count(strings.TrimSuffix(path, SEP), SEP)
+	s := string(os.PathSeparator)
+	return strings.Count(strings.TrimSuffix(path, s), s)
 }
 
 func isSubPath(base, target string) bool {
